@@ -1,3 +1,4 @@
+const bcrypt = require("bcrypt");
 const Router = require("express").Router;
 const User = require("../models").user;
 
@@ -18,7 +19,12 @@ router.post("/", async (req, res, next) => {
     if (!email || !password || !fullName) {
       res.status(400).send("missing parameters");
     } else {
-      const newUser = await User.create(req.body);
+      const newUser = await User.create({
+        email,
+        // Here, when handing down the password to the create method we hash it.
+        password: bcrypt.hashSync(password, 10),
+        fullName,
+      });
       res.json(newUser);
     }
   } catch (e) {

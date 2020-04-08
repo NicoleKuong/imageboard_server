@@ -1,5 +1,5 @@
 const { Router } = require("express");
-
+const { toData } = require("../auth/jwt");
 const Image = require("../models").image;
 
 const router = new Router();
@@ -27,12 +27,24 @@ router.post("/", async (req, res, next) => {
   }
 });
 
-router.get("/", (req, res, next) => {
-  const limit = req.query.limit || 25;
-  const offset = req.query.offset || 0;
-  Image.findAndCountAll({ limit, offset })
-    .then((result) => res.send({ images: result.rows, total: result.count }))
-    .catch((error) => next(error));
+router.get("/messy", async (req, res, next) => {
+  const auth =
+    req.headers.authorization && req.headers.authorization.split(" ");
+  if (auth && auth[0] === "Bearer" && auth[1]) {
+    try {
+      console.log(auth);
+      const data = toData(auth[1]);
+      console.log(data);
+    } catch (e) {
+      res.status(400).send("Invalid JWT token");
+    }
+    const allImages = await Image.findAll();
+    res.json(allImages);
+  } else {
+    res.status(401).send({
+      message: "Please supply some valid credentials",
+    });
+  }
 });
 
 module.exports = router;
